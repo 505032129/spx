@@ -603,3 +603,78 @@ func func_on_sprite_frames_set_changed(id C.GDExtensionInt) {
 		callbacks.OnSpriteFramesSetChanged(int64(id))
 	}
 }
+
+//export func_on_binary_data
+func func_on_binary_data(data C.GDExtensionConstBinaryPtr, size C.GDExtensionBinarySize) {
+	if callbacks.OnBinaryData != nil {
+		binaryData := ToBytes(data, size)
+		callbacks.OnBinaryData(binaryData)
+	}
+}
+
+// Binary data type definitions
+type GDExtensionBinaryPtr C.GDExtensionBinaryPtr
+type GDExtensionConstBinaryPtr C.GDExtensionConstBinaryPtr
+type GDExtensionUninitializedBinaryPtr C.GDExtensionUninitializedBinaryPtr
+type GDExtensionBinarySize C.GDExtensionBinarySize
+
+// Binary data operation functions
+var (
+	spxBinaryNew     C.GDExtensionSpxBinaryNew
+	spxBinaryGetSize C.GDExtensionSpxBinaryGetSize
+	spxBinaryCopy    C.GDExtensionSpxBinaryCopy
+	spxBinaryCompare C.GDExtensionSpxBinaryCompare
+	spxBinarySetData C.GDExtensionSpxBinarySetData
+	spxBinaryGetData C.GDExtensionSpxBinaryGetData
+)
+
+// Binary data conversion functions
+func ToBinaryPtr(data []byte) GDExtensionBinaryPtr {
+	if len(data) == 0 {
+		return nil
+	}
+	return GDExtensionBinaryPtr(unsafe.Pointer(&data[0]))
+}
+
+func ToBinarySize(size int) GDExtensionBinarySize {
+	return GDExtensionBinarySize(size)
+}
+
+func ToBytes(binary GDExtensionConstBinaryPtr, size GDExtensionBinarySize) []byte {
+	if binary == nil || size == 0 {
+		return nil
+	}
+	return C.GoBytes(unsafe.Pointer(binary), C.int(size))
+}
+
+// Create binary data
+func BinaryNew(size GDExtensionBinarySize) GDExtensionBinaryPtr {
+	var binary GDExtensionBinaryPtr
+	C.spxBinaryNew(&binary, size)
+	return binary
+}
+
+// Get binary data size
+func BinaryGetSize(binary GDExtensionConstBinaryPtr) GDExtensionBinarySize {
+	return C.spxBinaryGetSize(binary)
+}
+
+// Copy binary data
+func BinaryCopy(dest GDExtensionBinaryPtr, src GDExtensionConstBinaryPtr, size GDExtensionBinarySize) {
+	C.spxBinaryCopy(dest, src, size)
+}
+
+// Compare binary data
+func BinaryCompare(binary1, binary2 GDExtensionConstBinaryPtr, size GDExtensionBinarySize) bool {
+	return C.spxBinaryCompare(binary1, binary2, size) != 0
+}
+
+// Set binary data
+func BinarySetData(binary GDExtensionBinaryPtr, data GDExtensionConstBinaryPtr, size GDExtensionBinarySize) {
+	C.spxBinarySetData(binary, data, size)
+}
+
+// Get binary data
+func BinaryGetData(binary GDExtensionConstBinaryPtr, data GDExtensionBinaryPtr, maxSize GDExtensionBinarySize) {
+	C.spxBinaryGetData(binary, data, maxSize)
+}
